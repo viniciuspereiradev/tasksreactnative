@@ -14,7 +14,8 @@ export default props => {
         { textDecorationLine: "line-through" } : {}
 
     const date = props.doneAt ? props.doneAt : props.estimateAt
-    const formattedDate = moment(date).locale("pt-br").format("ddd, d [de] MMMM")
+    const formattedDate = moment(date).locale('pt-br')
+    .format('ddd, D [de] MMMM')
 
     const getRightContent = () => {
         return (
