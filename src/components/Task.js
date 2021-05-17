@@ -104,12 +104,12 @@ const styles = StyleSheet.create({
     desc: {
         fontFamily: commonStyles.fontFamily,
         color: commonStyles.colors.mainText,
-        fontSize: 17,
+        fontSize: 18,
     },
     date: {
         fontFamily: commonStyles.fontFamily,
         color: commonStyles.colors.subText,
-        fontSize: 14,
+        fontSize: 15,
     },
     rightOption: {
         backgroundColor: "red",
