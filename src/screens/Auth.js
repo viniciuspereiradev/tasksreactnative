@@ -1,30 +1,81 @@
 import React, { Component } from "react"
-import { ImageBackground, Text, StyleSheet, TextInput, View, TouchableOpacity, Platform, Alert } from "react-native"
+import { ImageBackground, Text, StyleSheet, View, TouchableOpacity, Alert } from "react-native"
+
+import axios from "axios"
 
 import backgroundImage from "../../assets/imgs/login.jpg"
 import commonStyles from '../commonStyles'
+import AuthInput from "../components/AuthInput"
 
+import { server, showError, showSuccess } from "../common"
 
+const initialState = {
+    name: "",
+    email: "viniciuspg0071@gmail.com",
+    password: "123456",
+    confirmPassword: "",
+    stageNew: false
+}
 
 export default class Auth extends Component {
 
     state = {
-        name: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        stageNew: false
+        ...initialState
     }
 
+
+
     signinOrSignup = () => {
-        if(this.state.stageNew) {
-            Alert.alert("Sucesso", "Criar a conta")
+        if (this.state.stageNew) {
+            this.signup()
         } else {
-            Alert.alert("Sucesso", "Logar")
+            this.signin()
+        }
+    }
+
+    signup = async () => {
+        try {
+            await axios.post(`${server}/signup`, {
+                name: this.state.name,
+                email: this.state.email,
+                password: this.state.password,
+                confirmPassword: this.state.confirmPassword,
+            })
+
+            showSuccess("Usuário cadastrado!")
+            this.setState({ ...initialState })
+        } catch (e) {
+            showError(e)
+        }
+    }
+
+    signin = async () => {
+        try {
+            const res = await axios.post(`${server}/signin`, {
+                email: this.state.email,
+                password: this.state.password,
+            })
+
+            axios.defaults.headers.common['Authorization'] = `bearer ${res.data.token}`
+            this.props.navigation.navigate('Home', res.data)
+        } catch (e) {
+            showError(e)
         }
     }
 
     render() {
+
+        const validations = []
+        validations.push(this.state.email && this.state.email.includes("@"))
+        validations.push(this.state.password && this.state.password.length >= 6)
+
+        if (this.state.stageNew) {
+            validations.push(this.state.name && this.state.name.trim().length >= 3)
+            validations.push(this.state.password === this.state.confirmPassword )
+        }
+
+        const validForm = validations.reduce((total, atual) => total && atual)
+
         return (
             <ImageBackground source={backgroundImage} style={styles.background}>
                 <Text style={styles.title}>Tasks</Text>
@@ -33,13 +84,15 @@ export default class Auth extends Component {
                         {this.state.stageNew ? "Crie a sua conta" : "Informe seus dados"}
                     </Text>
                     {this.state.stageNew &&
-                        <TextInput placeholder="Nome" value={this.state.name} style={styles.input} onChangeText={name => this.setState({ name })} />}
-                    <TextInput placeholder="Email" value={this.state.email} style={styles.input} onChangeText={email => this.setState({ email })} />
-                    <TextInput placeholder="Senha" value={this.state.password} style={styles.input} secureTextEntry={true} onChangeText={password => this.setState({ password })} />
+
+                        <AuthInput icon="user" placeholder="Nome" value={this.state.name} style={styles.input} onChangeText={name => this.setState({ name })} />}
+                    <AuthInput icon="at" placeholder="Email" value={this.state.email} style={styles.input} onChangeText={email => this.setState({ email })} />
+                    <AuthInput icon="lock" placeholder="Senha" value={this.state.password} style={styles.input} secureTextEntry={true} onChangeText={password => this.setState({ password })} />
                     {this.state.stageNew &&
-                        <TextInput placeholder="Confirme sua Senha" value={this.state.confirmPassword} style={styles.input} secureTextEntry={true} onChangeText={confirmPassword => this.setState({ confirmPassword })} />}
-                    <TouchableOpacity onPress={this.signinOrSignup}>
-                        <View style={styles.button}>
+                        <AuthInput icon="asterisk" placeholder="Confirme sua Senha" value={this.state.confirmPassword} style={styles.input} secureTextEntry={true} onChangeText={confirmPassword => this.setState({ confirmPassword })} />
+                    }
+                    <TouchableOpacity onPress={this.signinOrSignup} disabled={!validForm}>
+                        <View style={[styles.button, validForm ? {} : {backgroundColor: "#AAA"}]}>
                             <Text style={styles.buttonText}>
                                 {this.state.stageNew ? "Registrar" : "Entrar"}
                             </Text>
@@ -47,9 +100,9 @@ export default class Auth extends Component {
                     </TouchableOpacity>
                 </View>
                 <TouchableOpacity style={{ padding: 10 }}
-                onPress={ () => this.setState({ stageNew : !this.state.stageNew}) }>
-                    <Text style={styles.buttonText}>
-                     {this.state.stageNew ? "Já possui conta?" : "Ainda não possui conta?"}  
+                    onPress={() => this.setState({ stageNew: !this.state.stageNew })}>
+                    <Text style={styles.buttonTextOpt}>
+                        {this.state.stageNew ? "Já possui conta?" : "Ainda não possui conta?"}
                     </Text>
                 </TouchableOpacity>
             </ImageBackground>
@@ -88,18 +141,26 @@ const styles = StyleSheet.create({
     input: {
         marginTop: 10,
         backgroundColor: "#FFF",
-        padding: Platform.OS == "ios" ? 15 : 10,
     },
     button: {
         backgroundColor: "#080",
         marginTop: 20,
         padding: 10,
-        alignItems: "center"
+        alignItems: "center",
+        borderRadius: 7,
     },
     buttonText: {
         fontFamily: commonStyles.fontFamily,
         color: "#FFF",
         fontSize: 22,
+    },
+    buttonTextOpt: {
+        fontFamily: commonStyles.fontFamily,
+        color: "#FFF",
+        fontSize: 22,
+        padding: 8,
+        borderRadius: 7,
+        backgroundColor: "#000"
     }
 
 })
